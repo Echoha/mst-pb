@@ -22,7 +22,7 @@ CONTENT_LAYER = 'relu4_2'
 
 # Parameters
 learning_rate = 0.001
-epochs = 2
+epochs = 3
 batch_size = 8
 display_every_n = 2000  # 2000
 save_every_n = 4000  # 4000
