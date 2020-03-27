@@ -10,11 +10,11 @@ def net(image, alpha=1.0):
     conv1 = _conv_layer(image, int(32*alpha), 9, 1)
     conv2 = _conv_layer(conv1, int(64*alpha), 3, 2)
     conv3 = _conv_layer(conv2, int(128*alpha), 3, 2)
-    resid1 = _residual_block(conv3, 3)
-    resid2 = _residual_block(resid1, 3)
-    resid3 = _residual_block(resid2, 3)
-    resid4 = _residual_block(resid3, 3)
-    resid5 = _residual_block(resid4, 3)
+    resid1 = _residual_block(conv3, int(128*alpha), 3)
+    resid2 = _residual_block(resid1, int(128*alpha), 3)
+    resid3 = _residual_block(resid2, int(128*alpha), 3)
+    resid4 = _residual_block(resid3, int(128*alpha), 3)
+    resid5 = _residual_block(resid4, int(128*alpha), 3)
     conv_t1 = _conv_tranpose_layer(resid5, int(64*alpha) , 3, 2)
     conv_t2 = _conv_tranpose_layer(conv_t1, int(32*alpha) , 3, 2)
     conv_t3 = _conv_layer(conv_t2, 3, 9, 1, relu=False)
@@ -51,9 +51,9 @@ def _conv_tranpose_layer(net, num_filters, filter_size, strides):
     return tf.nn.relu(net)
 
 
-def _residual_block(net, filter_size=3):
-    tmp = _conv_layer(net, 128, filter_size, 1)
-    return net + _conv_layer(tmp, 128, filter_size, 1, relu=False)
+def _residual_block(net, num_filters, filter_size=3):
+    tmp = _conv_layer(net, num_filters, filter_size, 1)
+    return net + _conv_layer(tmp, num_filters, filter_size, 1, relu=False)
 
 
 def _instance_norm(net, train=True):
