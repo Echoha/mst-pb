@@ -1,4 +1,3 @@
-#!/usr/bin/env python
 # -*- coding: utf-8 -*-
 # Filename: style-transfer.py
 
@@ -23,9 +22,9 @@ CONTENT_LAYER = 'relu4_2'
 
 # Parameters
 learning_rate = 0.001
-epochs = 4
-batch_size = 4
-display_every_n = 1000  # 2000
+epochs = 2
+batch_size = 8
+display_every_n = 4000  # 2000
 save_every_n = 2000  # 4000
 
 
@@ -341,9 +340,11 @@ def main(_):
     if tf.gfile.Exists(FLAGS.model_dir):
         tf.gfile.DeleteRecursively(FLAGS.model_dir)
     tf.gfile.MakeDirs(FLAGS.model_dir)
-
+    
     content_targets = get_files(FLAGS.train_path)
     style_target = get_img(FLAGS.style)
+    
+    start_time = time.time()
 
     # train
     for epoch, iteration, ckpt in optimize(
@@ -356,7 +357,7 @@ def main(_):
             evaluate_img(FLAGS.test, preds_img_path, ckpt)
 
     # Freeze graph.
-    start_time = time.time()
+    
     freeze_graph(
         input_graph=os.path.join(FLAGS.model_dir,
                                  FLAGS.model_name + '.pb.txt'),
