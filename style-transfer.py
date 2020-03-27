@@ -24,8 +24,8 @@ CONTENT_LAYER = 'relu4_2'
 learning_rate = 0.001
 epochs = 2
 batch_size = 8
-display_every_n = 4000  # 2000
-save_every_n = 2000  # 4000
+display_every_n = 2000  # 2000
+save_every_n = 4000  # 4000
 
 
 def build_parser():
