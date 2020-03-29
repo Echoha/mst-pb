@@ -58,8 +58,8 @@ def main(args):
       img_ = cv2.resize(img,(512,512))
       X = np.zeros((1,512,512,3),dtype=np.float32)
       X[0] = img_
-      print('Input shape: ', X[0].shape)
-      image_transfer = sess.run(generated, feed_dict={input_x: X[0]})
+      print('Input shape: ', X.shape)
+      image_transfer = sess.run(generated, feed_dict={input_x: X})
       image_transfer = (image_transfer - image_transfer.min())/(image_transfer.max()-image_transfer.min())
       image_transfer = (image_transfer * 255).astype('uint8')
       misc.imsave('style_transfer.jpg', image_transfer)
