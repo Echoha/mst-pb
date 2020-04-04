@@ -45,10 +45,11 @@ def main(args):
       output = sess.graph.get_tensor_by_name(str(output_name)+":0")
       print(output)
 
-      converter = tf.lite.TFLiteConverter.from_frozen_graph(output_graph_path, input_arrays=[input_name], input_shapes={'input':[512, 512, 3]},output_arrays=[output_name])
+      # converter = tf.lite.TFLiteConverter.from_frozen_graph(output_graph_path, input_arrays=[input_name], input_shapes={'input':[512, 512, 3]},output_arrays=[output_name])
+      converter = tf.lite.TFLiteConverter.from_frozen_graph(output_graph_path, input_arrays=[input_name],output_arrays=[output_name])
       converter.optimizations = [tf.lite.Optimize.OPTIMIZE_FOR_SIZE]
       tflite_model=converter.convert()
-      open("model_pb.tflite", "wb").write(tflite_model)
+      open("drive/My Drive/XXX/XXX_model_pb.tflite", "wb").write(tflite_model)
       generated = output
       '''generated = tf.cast(output, tf.uint8)
       generated = tf.squeeze(generated, [0])'''
@@ -62,7 +63,7 @@ def main(args):
       image_transfer = sess.run(generated, feed_dict={input_x: X})
       image_transfer = (image_transfer - image_transfer.min())/(image_transfer.max()-image_transfer.min())
       image_transfer = (image_transfer * 255).astype('uint8')
-      misc.imsave('style_transfer.jpg', image_transfer)
+      misc.imsave('drive/My Drive/XXX/XXX_style_transfer.jpg', image_transfer)
       print('Output shape: ', image_transfer.shape)
       
       end_time = time.time()
