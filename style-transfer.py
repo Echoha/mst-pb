@@ -22,7 +22,7 @@ CONTENT_LAYER = 'relu4_2'
 
 # Parameters
 learning_rate = 0.001
-epochs = 4
+epochs = 2
 batch_size = 8
 display_every_n = 2000  # 2000
 save_every_n = 4000  # 4000
@@ -312,9 +312,12 @@ def optimize(content_targets, style_target, content_weight, style_weight,
                     tup = sess.run(to_get, feed_dict={X_content: X_batch})
                     _style_loss, _content_loss, _tv_loss, _all_loss, _preds = tup
                     losses = (_style_loss, _content_loss, _tv_loss, _all_loss)
-                    print(
+                    '''print(
                         'Iteration {}/{} - style loss: {:.4f}, content loss: {:.4f}, tv loss: {:.4f}, all loss: {:.4f}'.
-                        format(iteration, iterations, *losses))
+                        format(iteration, iterations, *losses))'''
+                    print(
+                        '******{} {:.4f} {:.4f} {:.4f} {:.4f}'.
+                        format(iteration, *losses))
                 if (iteration % save_every_n == 0) or (
                         iteration == iterations):
                     _all_loss = sess.run(
