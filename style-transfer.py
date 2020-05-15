@@ -22,10 +22,10 @@ CONTENT_LAYER = 'relu4_2'
 
 # Parameters
 learning_rate = 0.001
-epochs = 3
-batch_size = 8
-display_every_n = 2000  # 2000
-save_every_n = 4000  # 4000
+epochs = 1
+batch_size = 4
+display_every_n = 10  # 2000
+save_every_n = 20  # 4000
 
 
 def build_parser():
@@ -270,15 +270,21 @@ def optimize(content_targets, style_target, content_weight, style_weight,
 
         # Overall loss
         start_time = time.time()
-        all_loss = content_loss + style_loss + tv_loss
+        with tf.name_scope('all_loss'):
+          all_loss = content_loss + style_loss + tv_loss
+          tf.summary.scalar('all_loss', all_loss)
         end_time = time.time()
         delta_time = end_time - start_time
         print('compute overall loss time:', delta_time)
 
         # Build train
-        train = tf.train.AdamOptimizer(learning_rate).minimize(all_loss)
+        with tf.name_scope('train'):
+          train = tf.train.AdamOptimizer(learning_rate).minimize(all_loss)
+        
 
         sess.run(tf.global_variables_initializer())
+        merged = tf.summary.merge_all()
+        writer = tf.summary.FileWriter('logs', sess.graph)
 
         print('Start training...')
         start_time = time.time()
@@ -312,6 +318,8 @@ def optimize(content_targets, style_target, content_weight, style_weight,
                     tup = sess.run(to_get, feed_dict={X_content: X_batch})
                     _style_loss, _content_loss, _tv_loss, _all_loss, _preds = tup
                     losses = (_style_loss, _content_loss, _tv_loss, _all_loss)
+                    rs = sess.run(merged, feed_dict={X_content: X_batch})
+                    writer.add_summary(rs, iteration)
                     '''print(
                         'Iteration {}/{} - style loss: {:.4f}, content loss: {:.4f}, tv loss: {:.4f}, all loss: {:.4f}'.
                         format(iteration, iterations, *losses))'''
@@ -326,6 +334,7 @@ def optimize(content_targets, style_target, content_weight, style_weight,
                         sess,
                         os.path.join(FLAGS.checkpoint_dir,
                                      "ckpt_i{}".format(iteration)))
+                    
                     print('Epoch {}/{}, Iteration: {}/{}, loss: {}'.format(
                         epoch, epochs, iteration, iterations, _all_loss))
                     yield (epoch, iteration, ckpt)
