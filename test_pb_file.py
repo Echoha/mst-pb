@@ -47,15 +47,15 @@ def main(args):
 
       # converter = tf.lite.TFLiteConverter.from_frozen_graph(output_graph_path, input_arrays=[input_name], input_shapes={'input':[512, 512, 3]},output_arrays=[output_name])
       converter = tf.lite.TFLiteConverter.from_frozen_graph(output_graph_path, input_arrays=[input_name],output_arrays=[output_name])
-      # converter.inference_type = tf.lite.constants.QUANTIZED_UINT8
-      converter.inference_type = tf.lite.constants.FLOAT
-      converter.post_training_quantize = True
+      converter.inference_type = tf.lite.constants.QUANTIZED_UINT8
+      # converter.inference_type = tf.lite.constants.FLOAT
+      # converter.post_training_quantize = True
       # image_max = tf.reduce_max(input_x, name='image_max')
       # image_min = tf.reduce_min(input_x, name='image_min')
       # converter.optimizations = [tf.lite.Optimize.OPTIMIZE_FOR_SIZE]
       # mean=255 * image_min/(image_min-image_max)
       # std_dev=255 / image_max-image_min
-      converter.quantized_input_stats = {input_name: (73.0, 10.667)} # mean, std_dev，需要自己从训练集（增强后，输入网络之前的）统计出来
+      converter.quantized_input_stats = {input_name: (128.0, 0.)} # mean, std_dev，需要自己从训练集（增强后，输入网络之前的）统计出来
       tflite_model=converter.convert()
       open("fake_model_pb.tflite", "wb").write(tflite_model)
       generated = output
@@ -64,8 +64,8 @@ def main(args):
       
       start_time = time.time()
       
-      img_ = cv2.resize(img,(768, 768))
-      X = np.zeros((1,768,768,3),dtype=np.float32)
+      img_ = cv2.resize(img,(512, 512))
+      X = np.zeros((1,512,512,3),dtype=np.float32)
       X[0] = img_
       print('Input shape: ', X.shape)
       image_transfer = sess.run(generated, feed_dict={input_x: X})
