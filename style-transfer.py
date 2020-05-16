@@ -25,7 +25,7 @@ learning_rate = 0.001
 epochs = 1
 batch_size = 4
 display_every_n = 10  # 2000
-save_every_n = 20  # 4000
+save_every_n = 200  # 4000
 
 
 def build_parser():
@@ -118,7 +118,9 @@ def evaluate_img(img_in, img_path, ckpt):
         # Declare placeholders we'll feed into the graph
         X_inputs = tf.placeholder(
             tf.float32, shape=batch_shape, name='X_inputs')
-
+        
+        # image_max = tf.reduce_max(batch_shape, name='image_max')
+        # image_min = tf.reduce_min(batch_shape, name='image_min')
         # Define output node
         preds = transform.net(X_inputs, FLAGS.alpha)  # (1, 720, 720, 3)
         tf.identity(preds[0], name='output')
@@ -186,6 +188,8 @@ def optimize(content_targets, style_target, content_weight, style_weight,
             tf.float32, shape=style_shape, name='style_image')
         X_content = tf.placeholder(
             tf.float32, shape=batch_shape, name='X_content')
+        # image_max = tf.reduce_max(batch_shape, name='image_max')
+        # image_min = tf.reduce_min(batch_shape, name='image_min')
 
         # Precompute content features
         start_time = time.time()
@@ -369,7 +373,7 @@ def main(_):
     for epoch, iteration, ckpt in optimize(
             content_targets, style_target, FLAGS.content_weight,
             FLAGS.style_weight, FLAGS.tv_weight, FLAGS.vgg_path):
-        if (FLAGS.test=True):
+        if (FLAGS.test):
         # if (True):
             assert FLAGS.test_dir is not False
             preds_img_name = "{}_{}.png".format(epoch, iteration)
