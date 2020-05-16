@@ -109,8 +109,8 @@ def _tensor_size(tensor):
 
 
 def evaluate_img(img_in, img_path, ckpt):
-    img_shape = (512, 512, 3)
-    batch_shape = (1,512, 512, 3)
+    img_shape = (768, 768, 3)
+    batch_shape = (1,768, 768, 3)
 
     soft_config = tf.ConfigProto(allow_soft_placement=True)
     soft_config.gpu_options.allow_growth = True
@@ -145,6 +145,11 @@ def evaluate_img(img_in, img_path, ckpt):
 
         _preds = sess.run(preds, feed_dict={X_inputs: X})
         save_img(img_path, _preds[0])
+
+        # Call the eval rewrite which rewrites the graph in-place with
+        # FakeQuantization nodes and fold batchnorm for eval.
+        g = tf.get_default_graph()
+        tf.contrib.quantize.create_eval_graph(input_graph=g)
 
         # Write graph.
         start_time = time.time()
@@ -277,6 +282,8 @@ def optimize(content_targets, style_target, content_weight, style_weight,
         delta_time = end_time - start_time
         print('compute overall loss time:', delta_time)
 
+        tf.contrib.quantize.create_training_graph(input_graph = tf.get_default_graph(), quant_delay=20)
+
         # Build train
         with tf.name_scope('train'):
           train = tf.train.AdamOptimizer(learning_rate).minimize(all_loss)
@@ -362,14 +369,17 @@ def main(_):
     for epoch, iteration, ckpt in optimize(
             content_targets, style_target, FLAGS.content_weight,
             FLAGS.style_weight, FLAGS.tv_weight, FLAGS.vgg_path):
-        if (FLAGS.test):
+        if (FLAGS.test=True):
+        # if (True):
             assert FLAGS.test_dir is not False
             preds_img_name = "{}_{}.png".format(epoch, iteration)
             preds_img_path = os.path.join(FLAGS.test_dir, preds_img_name)
             evaluate_img(FLAGS.test, preds_img_path, ckpt)
+            # evaluate_img(True, preds_img_path, ckpt)
 
     # Freeze graph.
-    
+    # tf.contrib.quantize.create_eval_graph(input_graph = tf.get_default_graph())
+
     freeze_graph(
         input_graph=os.path.join(FLAGS.model_dir,
                                  FLAGS.model_name + '.pb.txt'),
@@ -392,7 +402,7 @@ def main2(_):
     evaluate_img(FLAGS.test,
                  os.path.join(FLAGS.test_dir, 'res_2.jpg'),
                  FLAGS.checkpoint_path)
-
+    # tf.contrib.quantize.create_eval_graph(input_graph = tf.get_default_graph())
     # Freeze graph.
     start_time = time.time()
     freeze_graph(
