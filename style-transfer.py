@@ -109,8 +109,8 @@ def _tensor_size(tensor):
 
 
 def evaluate_img(img_in, img_path, ckpt):
-    img_shape = (768, 768, 3)
-    batch_shape = (1,768, 768, 3)
+    img_shape = (512, 512, 3)
+    batch_shape = (1,512, 512, 3)
 
     soft_config = tf.ConfigProto(allow_soft_placement=True)
     soft_config.gpu_options.allow_growth = True
@@ -119,8 +119,11 @@ def evaluate_img(img_in, img_path, ckpt):
         X_inputs = tf.placeholder(
             tf.float32, shape=batch_shape, name='X_inputs')
         
-        # image_max = tf.reduce_max(batch_shape, name='image_max')
-        # image_min = tf.reduce_min(batch_shape, name='image_min')
+        '''image_max = tf.reduce_max(X_inputs, name='image_max')
+        image_min = tf.reduce_min(X_inputs, name='image_min')
+        X_inputs = tf.quantization.fake_quant_with_min_max_vars(
+            X_inputs, image_max, image_min, num_bits=8, narrow_range=False, name=None
+        )'''
         # Define output node
         preds = transform.net(X_inputs, FLAGS.alpha)  # (1, 720, 720, 3)
         tf.identity(preds[0], name='output')
@@ -150,8 +153,8 @@ def evaluate_img(img_in, img_path, ckpt):
 
         # Call the eval rewrite which rewrites the graph in-place with
         # FakeQuantization nodes and fold batchnorm for eval.
-        g = tf.get_default_graph()
-        tf.contrib.quantize.create_eval_graph(input_graph=g)
+        # g = tf.get_default_graph()
+        # tf.contrib.quantize.create_eval_graph(input_graph=g)
 
         # Write graph.
         start_time = time.time()
@@ -188,8 +191,11 @@ def optimize(content_targets, style_target, content_weight, style_weight,
             tf.float32, shape=style_shape, name='style_image')
         X_content = tf.placeholder(
             tf.float32, shape=batch_shape, name='X_content')
-        # image_max = tf.reduce_max(batch_shape, name='image_max')
-        # image_min = tf.reduce_min(batch_shape, name='image_min')
+        '''image_max = tf.reduce_max(X_content, name='image_max')
+        image_min = tf.reduce_min(X_content, name='image_min')
+        X_content = tf.quantization.fake_quant_with_min_max_vars(
+            X_content, image_max, image_min, num_bits=8, narrow_range=False, name=None
+        )'''
 
         # Precompute content features
         start_time = time.time()
@@ -341,6 +347,7 @@ def optimize(content_targets, style_target, content_weight, style_weight,
                         iteration == iterations):
                     _all_loss = sess.run(
                         all_loss, feed_dict={X_content: X_batch})
+                    
                     ckpt = saver.save(
                         sess,
                         os.path.join(FLAGS.checkpoint_dir,
@@ -382,7 +389,7 @@ def main(_):
             # evaluate_img(True, preds_img_path, ckpt)
 
     # Freeze graph.
-    # tf.contrib.quantize.create_eval_graph(input_graph = tf.get_default_graph())
+    tf.contrib.quantize.create_eval_graph(input_graph = tf.get_default_graph())
 
     freeze_graph(
         input_graph=os.path.join(FLAGS.model_dir,
@@ -406,7 +413,7 @@ def main2(_):
     evaluate_img(FLAGS.test,
                  os.path.join(FLAGS.test_dir, 'res_2.jpg'),
                  FLAGS.checkpoint_path)
-    # tf.contrib.quantize.create_eval_graph(input_graph = tf.get_default_graph())
+    tf.contrib.quantize.create_eval_graph(input_graph = tf.get_default_graph())
     # Freeze graph.
     start_time = time.time()
     freeze_graph(
