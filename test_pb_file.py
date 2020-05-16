@@ -47,23 +47,31 @@ def main(args):
 
       # converter = tf.lite.TFLiteConverter.from_frozen_graph(output_graph_path, input_arrays=[input_name], input_shapes={'input':[512, 512, 3]},output_arrays=[output_name])
       converter = tf.lite.TFLiteConverter.from_frozen_graph(output_graph_path, input_arrays=[input_name],output_arrays=[output_name])
-      converter.optimizations = [tf.lite.Optimize.OPTIMIZE_FOR_SIZE]
+      # converter.inference_type = tf.lite.constants.QUANTIZED_UINT8
+      converter.inference_type = tf.lite.constants.FLOAT
+      converter.post_training_quantize = True
+      # image_max = tf.reduce_max(input_x, name='image_max')
+      # image_min = tf.reduce_min(input_x, name='image_min')
+      # converter.optimizations = [tf.lite.Optimize.OPTIMIZE_FOR_SIZE]
+      # mean=255 * image_min/(image_min-image_max)
+      # std_dev=255 / image_max-image_min
+      converter.quantized_input_stats = {input_name: (73.0, 10.667)} # mean, std_dev，需要自己从训练集（增强后，输入网络之前的）统计出来
       tflite_model=converter.convert()
-      open("drive/My Drive/XXX/XXX_model_pb.tflite", "wb").write(tflite_model)
+      open("fake_model_pb.tflite", "wb").write(tflite_model)
       generated = output
       '''generated = tf.cast(output, tf.uint8)
       generated = tf.squeeze(generated, [0])'''
       
       start_time = time.time()
       
-      img_ = cv2.resize(img,(512,512))
-      X = np.zeros((1,512,512,3),dtype=np.float32)
+      img_ = cv2.resize(img,(768, 768))
+      X = np.zeros((1,768,768,3),dtype=np.float32)
       X[0] = img_
       print('Input shape: ', X.shape)
       image_transfer = sess.run(generated, feed_dict={input_x: X})
       image_transfer = (image_transfer - image_transfer.min())/(image_transfer.max()-image_transfer.min())
       image_transfer = (image_transfer * 255).astype('uint8')
-      misc.imsave('drive/My Drive/XXX/XXX_style_transfer.jpg', image_transfer)
+      misc.imsave('style_transfer.jpg', image_transfer)
       print('Output shape: ', image_transfer.shape)
       
       end_time = time.time()
@@ -74,6 +82,3 @@ if __name__ == '__main__':
     print(args)
     main(args)
     pb_path = args.model_name
-
-				 
-
