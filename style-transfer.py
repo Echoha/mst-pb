@@ -22,10 +22,10 @@ CONTENT_LAYER = 'relu4_2'
 
 # Parameters
 learning_rate = 0.001
-epochs = 1
-batch_size = 4
-display_every_n = 10  # 2000
-save_every_n = 200  # 4000
+epochs = 4
+batch_size = 8
+display_every_n = 2000  # 2000
+save_every_n = 4000  # 4000
 
 
 def build_parser():
@@ -242,9 +242,11 @@ def optimize(content_targets, style_target, content_weight, style_weight,
         print(content_features[CONTENT_LAYER])
         assert _tensor_size(content_features[CONTENT_LAYER]) == _tensor_size(
             preds_net[CONTENT_LAYER])
-        content_loss = content_weight * (2 * tf.nn.l2_loss(
-            preds_net[CONTENT_LAYER] - content_features[CONTENT_LAYER]
-        ) / content_size)
+        with tf.name_scope('content_loss'):
+          content_loss = content_weight * (2 * tf.nn.l2_loss(
+              preds_net[CONTENT_LAYER] - content_features[CONTENT_LAYER]
+          ) / content_size)
+          tf.summary.scalar('content_loss', content_loss)
         end_time = time.time()
         delta_time = end_time - start_time
         print('compute content loss time:', delta_time)
@@ -263,8 +265,10 @@ def optimize(content_targets, style_target, content_weight, style_weight,
             style_gram = style_features[style_layer]
             style_losses.append(
                 2 * tf.nn.l2_loss(grams - style_gram) / style_gram.size)
-        style_loss = style_weight * functools.reduce(tf.add,
-                                                     style_losses) / batch_size
+        
+        with tf.name_scope('style_loss'):
+          style_loss = style_weight * functools.reduce(tf.add, style_losses) / batch_size
+          tf.summary.scalar('style_loss', style_loss)
         end_time = time.time()
         delta_time = end_time - start_time
         print('compute style loss time:', delta_time)
@@ -292,7 +296,7 @@ def optimize(content_targets, style_target, content_weight, style_weight,
         delta_time = end_time - start_time
         print('compute overall loss time:', delta_time)
 
-        tf.contrib.quantize.create_training_graph(input_graph = tf.get_default_graph(), quant_delay=20)
+        # tf.contrib.quantize.create_training_graph(input_graph = tf.get_default_graph(), quant_delay=20)
 
         # Build train
         with tf.name_scope('train'):
@@ -301,7 +305,7 @@ def optimize(content_targets, style_target, content_weight, style_weight,
 
         sess.run(tf.global_variables_initializer())
         merged = tf.summary.merge_all()
-        writer = tf.summary.FileWriter('logs', sess.graph)
+        writer = tf.summary.FileWriter('/content/drive/My Drive/logs', sess.graph)
 
         print('Start training...')
         start_time = time.time()
@@ -389,7 +393,7 @@ def main(_):
             # evaluate_img(True, preds_img_path, ckpt)
 
     # Freeze graph.
-    tf.contrib.quantize.create_eval_graph(input_graph = tf.get_default_graph())
+    # tf.contrib.quantize.create_eval_graph(input_graph = tf.get_default_graph())
 
     freeze_graph(
         input_graph=os.path.join(FLAGS.model_dir,
@@ -413,7 +417,7 @@ def main2(_):
     evaluate_img(FLAGS.test,
                  os.path.join(FLAGS.test_dir, 'res_2.jpg'),
                  FLAGS.checkpoint_path)
-    tf.contrib.quantize.create_eval_graph(input_graph = tf.get_default_graph())
+    # tf.contrib.quantize.create_eval_graph(input_graph = tf.get_default_graph())
     # Freeze graph.
     start_time = time.time()
     freeze_graph(
